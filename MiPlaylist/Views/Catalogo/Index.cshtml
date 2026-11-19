@@ -1,0 +1,130 @@
+﻿@model MiPlaylist.Models.CatalogoViewModel
+@{
+    ViewBag.Title = "Catálogo";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <h1 class="h2 mb-0">Catálogo de canciones</h1>
+        <div class="text-body-secondary">@Model.Total canciones encontradas</div>
+    </div>
+    @Html.ActionLink("+ Nueva canción", "Crear", "Catalogo", null, new { @class = "btn btn-success" })
+</div>
+
+
+@using (Html.BeginForm("Index", "Catalogo", FormMethod.Get, new { @class = "row g-2 mb-4" }))
+{
+    <div class="col-12 col-md-6">
+        <input type="search" name="q" value="@Model.Q" maxlength="100" class="form-control"
+               placeholder="Buscar por título, artista o álbum" />
+    </div>
+    <div class="col-12 col-md-3">
+        @Html.DropDownList("genero", new SelectList(Model.Generos, Model.Genero), "Todos los géneros", new { @class = "form-select" })
+    </div>
+    <div class="col-12 col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary flex-fill">Buscar</button>
+        @Html.ActionLink("Limpiar", "Index", "Catalogo", null, new { @class = "btn btn-outline-secondary" })
+    </div>
+}
+
+@if (!Model.Canciones.Any())
+{
+    <div class="alert alert-info">No se encontraron canciones con ese filtro.</div>
+}
+else
+{
+    <div class="row row-cols-2 row-cols-md-3 row-cols-xl-4 g-3">
+        @foreach (var c in Model.Canciones)
+        {
+            bool enBiblioteca = Model.EnBiblioteca.Contains(c.Id);
+            bool esMia = c.CreadaPorId == Model.UsuarioId;
+            <div class="col">
+                <div class="card song-card h-100">
+                    <div class="song-cover">
+                        <span class="song-cover-ph">🎵</span>
+                        @if (!string.IsNullOrEmpty(c.PortadaUrl))
+                        {
+                            <img src="@c.PortadaUrl" alt="Portada de @c.Titulo" loading="lazy" onerror="this.style.display='none'" />
+                        }
+                        @if (esMia)
+                        {
+                            <span class="badge text-bg-primary song-badge">Creada por ti</span>
+                        }
+                    </div>
+
+                    <div class="card-body pb-2">
+                        <h2 class="h6 card-title mb-1 text-truncate" title="@c.Titulo">@c.Titulo</h2>
+                        <div class="small text-body-secondary text-truncate" title="@c.Artista">@c.Artista</div>
+                        <div class="mt-2 d-flex flex-wrap gap-1">
+                            <span class="badge text-bg-secondary">@c.Genero</span>
+                            @if (c.Anio.HasValue && c.Anio > 0)
+                            {
+                                <span class="badge border text-body-secondary fw-normal">@c.Anio</span>
+                            }
+                            @if (c.DuracionSeg.HasValue)
+                            {
+                                <span class="badge border text-body-secondary fw-normal">@TimeSpan.FromSeconds(c.DuracionSeg.Value).ToString(@"m\:ss")</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="card-footer bg-transparent border-0 pt-0">
+                        <div class="d-flex gap-2">
+                            @if (!string.IsNullOrEmpty(c.SpotifyId))
+                            {
+                                <a href="https://open.spotify.com/track/@c.SpotifyId" target="_blank" rel="noopener"
+                                   class="btn btn-sm btn-outline-success flex-fill">▶ Escuchar</a>
+                            }
+
+                            @if (enBiblioteca)
+                            {
+                                <span class="btn btn-sm btn-outline-secondary disabled flex-fill">✓ En tu biblioteca</span>
+                            }
+                            else
+                            {
+                                using (Html.BeginForm("Agregar", "Catalogo", FormMethod.Post, new { @class = "flex-fill" }))
+                                {
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@c.Id" />
+                                    <input type="hidden" name="q" value="@Model.Q" />
+                                    <input type="hidden" name="genero" value="@Model.Genero" />
+                                    <input type="hidden" name="pagina" value="@Model.Pagina" />
+                                    <button type="submit" class="btn btn-sm btn-success w-100">+ Agregar</button>
+                                }
+                            }
+                        </div>
+
+                        @if (esMia)
+                        {
+                            @Html.ActionLink("✎ Editar", "Editar", "Catalogo", new { id = c.Id }, new { @class = "btn btn-sm btn-outline-secondary w-100 mt-2" })
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    if (Model.TotalPaginas > 1)
+    {
+        int ini = Math.Max(1, Model.Pagina - 2);
+        int fin = Math.Min(Model.TotalPaginas, Model.Pagina + 2);
+
+        <nav class="mt-4" aria-label="Paginación del catálogo">
+            <ul class="pagination justify-content-center flex-wrap">
+                <li class="page-item @(Model.Pagina == 1 ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { q = Model.Q, genero = Model.Genero, pagina = Model.Pagina - 1 })">« Anterior</a>
+                </li>
+                @for (int p = ini; p <= fin; p++)
+                {
+                    <li class="page-item @(p == Model.Pagina ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { q = Model.Q, genero = Model.Genero, pagina = p })">@p</a>
+                    </li>
+                }
+                <li class="page-item @(Model.Pagina == Model.TotalPaginas ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { q = Model.Q, genero = Model.Genero, pagina = Model.Pagina + 1 })">Siguiente »</a>
+                </li>
+            </ul>
+            <p class="text-center text-body-secondary small">Página @Model.Pagina de @Model.TotalPaginas</p>
+        </nav>
+    }
+}

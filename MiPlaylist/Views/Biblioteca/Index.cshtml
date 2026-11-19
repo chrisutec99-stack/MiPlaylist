@@ -1,0 +1,125 @@
+﻿@model MiPlaylist.Models.BibliotecaViewModel
+@{
+    ViewBag.Title = "Mi biblioteca";
+}
+
+<h1 class="h2 mb-1">Mi biblioteca</h1>
+<p class="text-body-secondary">
+    @Model.TotalBiblioteca canciones en tu biblioteca, @Model.TotalFavoritas marcadas como favoritas
+</p>
+
+@Html.Partial("_Pestanas", "biblioteca")
+
+
+
+@using (Html.BeginForm("Index", "Biblioteca", FormMethod.Get, new { @class = "row g-2 align-items-center mb-3" }))
+{
+    <div class="col-12 col-md-4">
+        <input type="search" name="q" value="@Model.Q" maxlength="100" class="form-control"
+               placeholder="Buscar en mi biblioteca" />
+    </div>
+    <div class="col-12 col-md-3">
+        @Html.DropDownList("genero", new SelectList(Model.Generos, Model.Genero), "Todos los géneros", new { @class = "form-select" })
+    </div>
+    <div class="col-auto">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="soloFavoritas" name="soloFavoritas" value="true" checked="@Model.SoloFavoritas" />
+            <label class="form-check-label" for="soloFavoritas">Solo favoritas</label>
+        </div>
+    </div>
+    <div class="col-auto d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+        @Html.ActionLink("Limpiar", "Index", "Biblioteca", null, new { @class = "btn btn-outline-secondary" })
+    </div>
+}
+
+@if (!Model.Items.Any())
+{
+    <div class="alert alert-info">
+        @if (Model.TotalBiblioteca == 0)
+        {
+            <text>Aún no tienes canciones. Ve al @Html.ActionLink("Catálogo", "Index", "Catalogo", null, new { @class = "alert-link" }) y agrega las que quieras.</text>
+        }
+        else
+        {
+            <text>Ninguna canción coincide con ese filtro.</text>
+        }
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th style="width:64px"></th>
+                    <th>Título</th>
+                    <th>Artista</th>
+                    <th>Género</th>
+                    <th>Año</th>
+                    <th>Duración</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    var c = item.Cancion;
+                    <tr>
+                        <td>
+                            @using (Html.BeginForm("Favorita", "Biblioteca", FormMethod.Post))
+                            {
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@c.Id" />
+                                <input type="hidden" name="q" value="@Model.Q" />
+                                <input type="hidden" name="genero" value="@Model.Genero" />
+                                <input type="hidden" name="soloFavoritas" value="@(Model.SoloFavoritas ? "true" : "false")" />
+                                <button type="submit" class="btn btn-sm @(item.EsFavorita ? "btn-warning" : "btn-outline-secondary")"
+                                        title="@(item.EsFavorita ? "Quitar de favoritas" : "Marcar como favorita")">
+                                    @(item.EsFavorita ? "★" : "☆")
+                                </button>
+                            }
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(c.PortadaUrl))
+                            {
+                                <img src="@c.PortadaUrl" class="cover-sm" alt="" loading="lazy" />
+                            }
+                            else
+                            {
+                                <div class="cover-sm cover-sm-ph">🎵</div>
+                            }
+                        </td>
+                        <td class="fw-semibold">@c.Titulo</td>
+                        <td>@c.Artista</td>
+                        <td>@c.Genero</td>
+                        <td>@(c.Anio.HasValue && c.Anio > 0 ? c.Anio.ToString() : "—")</td>
+                        <td>@(c.DuracionSeg.HasValue ? TimeSpan.FromSeconds(c.DuracionSeg.Value).ToString(@"m\:ss") : "-")</td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(c.SpotifyId))
+                            {
+                                <a href="https://open.spotify.com/track/@c.SpotifyId" target="_blank" rel="noopener"
+                                   class="btn btn-sm btn-outline-success">▶ Escuchar</a>
+                            }
+                        </td>
+                        <td>
+                            @* El confirm() se reemplaza por un modal en el punto 4 *@
+                            @using (Html.BeginForm("Quitar", "Biblioteca", FormMethod.Post,
+new { data_confirm = "¿Quitar \"" + c.Titulo + "\" de tu biblioteca?", data_confirm_titulo = "Quitar canción", data_confirm_boton = "Sí, quitar" }))
+                            {
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@c.Id" />
+                                <input type="hidden" name="q" value="@Model.Q" />
+                                <input type="hidden" name="genero" value="@Model.Genero" />
+                                <input type="hidden" name="soloFavoritas" value="@(Model.SoloFavoritas ? "true" : "false")" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Quitar</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

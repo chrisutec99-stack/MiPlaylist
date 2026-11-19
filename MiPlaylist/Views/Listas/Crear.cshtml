@@ -1,0 +1,93 @@
+﻿@model MiPlaylist.Models.ListaCrearViewModel
+@{
+    ViewBag.Title = "Nueva lista";
+}
+@Html.Partial("_EstilosFormularios")
+
+<div class="row justify-content-center my-4">
+    <div class="col-lg-10 col-xl-9">
+        <div class="row g-4 align-items-start">
+
+            <div class="col-md-7">
+                <div class="card auth-card shadow">
+                    <div class="auth-head">
+                        <div class="auth-logo">🎶</div>
+                        <h1 class="h4 mb-1">Nueva lista</h1>
+                        <div class="small opacity-75">Una lista para cada momento</div>
+                    </div>
+                    <div class="card-body p-4">
+                        @using (Html.BeginForm("Crear", "Listas", FormMethod.Post))
+                        {
+                            @Html.AntiForgeryToken()
+                            @Html.ValidationSummary(true, "", new { @class = "alert alert-danger py-2 small" })
+
+                            <div class="mb-3">
+                                @Html.LabelFor(m => m.Nombre, new { @class = "form-label" })
+                                <div class="input-group">
+                                    <span class="input-group-text">📝</span>
+                                    @Html.TextBoxFor(m => m.Nombre, new { @class = "form-control", maxlength = 80, placeholder = "Por ejemplo: Para estudiar", autofocus = "autofocus" })
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <div>@Html.ValidationMessageFor(m => m.Nombre, "", new { @class = "text-danger small" })</div>
+                                    <div class="form-text mt-1"><span id="contNombre">0</span>/80</div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                @Html.LabelFor(m => m.Descripcion, new { @class = "form-label" })
+                                @Html.TextAreaFor(m => m.Descripcion, 3, 40, new { @class = "form-control", maxlength = 250, placeholder = "¿Para qué es esta lista? (opcional)" })
+                                <div class="d-flex justify-content-between">
+                                    <div>@Html.ValidationMessageFor(m => m.Descripcion, "", new { @class = "text-danger small" })</div>
+                                    <div class="form-text mt-1"><span id="contDesc">0</span>/250</div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg flex-fill">Crear lista</button>
+                                @Html.ActionLink("Cancelar", "Index", "Listas", null, new { @class = "btn btn-outline-secondary btn-lg" })
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-5 d-none d-md-block">
+                <div class="small text-body-secondary mb-2">Así se verá en "Mis listas"</div>
+                <div class="card song-card">
+                    <div class="mosaico"><div class="mosaico-ph">🎵</div></div>
+                    <div class="card-body">
+                        <h2 class="h5 card-title text-truncate mb-1" id="pvNombre">Nombre de tu lista</h2>
+                        <p class="small text-body-secondary mb-2" id="pvDesc" hidden></p>
+                        <span class="badge text-bg-secondary">0 canciones</span>
+                    </div>
+                </div>
+                <div class="small text-body-secondary mt-2">
+                    Las portadas aparecen solas cuando agregues canciones.
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+    <script>
+        (function () {
+            var nombre = document.getElementById('Nombre');
+            var desc = document.getElementById('Descripcion');
+
+            function pintar() {
+                document.getElementById('contNombre').textContent = nombre.value.length;
+                document.getElementById('contDesc').textContent = desc.value.length;
+                document.getElementById('pvNombre').textContent = nombre.value.trim() || 'Nombre de tu lista';
+                var pd = document.getElementById('pvDesc');
+                pd.textContent = desc.value.trim();
+                pd.hidden = !desc.value.trim();
+            }
+            nombre.addEventListener('input', pintar);
+            desc.addEventListener('input', pintar);
+            pintar();
+        })();
+    </script>
+}

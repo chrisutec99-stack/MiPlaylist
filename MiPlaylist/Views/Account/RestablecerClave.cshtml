@@ -1,0 +1,77 @@
+﻿@model MiPlaylist.Models.RestablecerClaveViewModel
+@{
+    ViewBag.Title = "Nueva contraseña";
+}
+@Html.Partial("_EstilosFormularios")
+
+<div class="auth-wrap">
+    <div class="card auth-card shadow">
+        <div class="auth-head">
+            <div class="auth-logo">📬</div>
+            <h1 class="h4 mb-1">Revisa tu correo</h1>
+            <div class="small opacity-75">Escribe el código y elige tu nueva contraseña</div>
+        </div>
+        <div class="card-body p-4">
+            @using (Html.BeginForm("RestablecerClave", "Account", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                @Html.ValidationSummary(true, "", new { @class = "alert alert-danger py-2 small" })
+
+                <div class="mb-3">
+                    @Html.LabelFor(m => m.Correo, new { @class = "form-label" })
+                    <div class="input-group">
+                        <span class="input-group-text">✉️</span>
+                        @Html.TextBoxFor(m => m.Correo, new { @class = "form-control", autocomplete = "email" })
+                    </div>
+                    @Html.ValidationMessageFor(m => m.Correo, "", new { @class = "text-danger small" })
+                </div>
+
+                <div class="mb-3">
+                    @Html.LabelFor(m => m.Codigo, new { @class = "form-label" })
+                    @Html.TextBoxFor(m => m.Codigo, new { @class = "form-control form-control-lg text-center", maxlength = 6, inputmode = "numeric", autocomplete = "one-time-code", placeholder = "000000", style = "letter-spacing:.5rem;font-weight:700" })
+                    @Html.ValidationMessageFor(m => m.Codigo, "", new { @class = "text-danger small" })
+                    <div class="form-text">El código vence en 10 minutos.</div>
+                </div>
+
+                <div class="mb-3">
+                    @Html.LabelFor(m => m.ClaveNueva, new { @class = "form-label" })
+                    <div class="input-group">
+                        <span class="input-group-text">🔒</span>
+                        @Html.PasswordFor(m => m.ClaveNueva, new { @class = "form-control", placeholder = "Mínimo 8, una mayúscula y un número", autocomplete = "new-password" })
+                        <button class="btn btn-outline-secondary btn-ver" type="button" data-target="ClaveNueva" title="Mostrar u ocultar">👁</button>
+                    </div>
+                    @Html.ValidationMessageFor(m => m.ClaveNueva, "", new { @class = "text-danger small" })
+                </div>
+
+                <div class="mb-4">
+                    @Html.LabelFor(m => m.ConfirmarClave, new { @class = "form-label" })
+                    <div class="input-group">
+                        <span class="input-group-text">🔒</span>
+                        @Html.PasswordFor(m => m.ConfirmarClave, new { @class = "form-control", placeholder = "Repite la contraseña", autocomplete = "new-password" })
+                        <button class="btn btn-outline-secondary btn-ver" type="button" data-target="ConfirmarClave" title="Mostrar u ocultar">👁</button>
+                    </div>
+                    @Html.ValidationMessageFor(m => m.ConfirmarClave, "", new { @class = "text-danger small" })
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg w-100">Cambiar contraseña</button>
+            }
+        </div>
+        <div class="card-footer text-center bg-transparent py-3">
+            <span class="text-body-secondary">¿No llegó?</span>
+            @Html.ActionLink("Pedir otro código", "OlvideClave", "Account", null, new { @class = "fw-semibold" })
+            · @Html.ActionLink("Volver", "Login", "Account")
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+    <script>
+        document.querySelectorAll('.btn-ver').forEach(function (b) {
+            b.addEventListener('click', function () {
+                var i = document.getElementById(b.getAttribute('data-target'));
+                i.type = (i.type === 'password') ? 'text' : 'password';
+            });
+        });
+    </script>
+}

@@ -1,0 +1,111 @@
+﻿@model MiPlaylist.Models.ListaDetalleViewModel
+@{
+    ViewBag.Title = Model.Lista.Nombre;
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">@Html.ActionLink("Mis listas", "Index", "Listas")</li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.Lista.Nombre</li>
+    </ol>
+</nav>
+
+<div class="mb-4">
+    <h1 class="h2 mb-1">@Model.Lista.Nombre</h1>
+    @if (!string.IsNullOrEmpty(Model.Lista.Descripcion))
+    {
+        <p class="text-body-secondary mb-2">@Model.Lista.Descripcion</p>
+    }
+    <span class="badge text-bg-secondary">@Model.Canciones.Count @(Model.Canciones.Count == 1 ? "canción" : "canciones")</span>
+    <span class="badge border text-body-secondary fw-normal">@MiPlaylist.Helpers.Formato.DuracionTotal(Model.DuracionTotalSeg)</span>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h2 class="h5">Agregar una canción de tu biblioteca</h2>
+        @if (Model.Disponibles.Any())
+        {
+            using (Html.BeginForm("AgregarCancion", "Listas", FormMethod.Post, new { @class = "row g-2" }))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="listaId" value="@Model.Lista.Id" />
+                <div class="col-12 col-md-8">
+                    @Html.DropDownList("cancionId", Model.Disponibles, "Elige una canción", new { @class = "form-select" })
+                </div>
+                <div class="col-12 col-md-4">
+                    <button type="submit" class="btn btn-success w-100">+ Agregar a la lista</button>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="alert alert-info mb-0">
+                No tienes más canciones disponibles. Agrega más desde el @Html.ActionLink("Catálogo", "Index", "Catalogo", null, new { @class = "alert-link" }).
+            </div>
+        }
+    </div>
+</div>
+
+<h2 class="h5 mb-3">Canciones de la lista (@Model.Canciones.Count)</h2>
+@if (!Model.Canciones.Any())
+{
+    <p class="text-body-secondary">Esta lista está vacía.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th style="width:64px"></th>
+                    <th>Título</th>
+                    <th>Artista</th>
+                    <th>Género</th>
+                    <th>Duración</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model.Canciones)
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrEmpty(c.PortadaUrl))
+                            {
+                                <img src="@c.PortadaUrl" class="cover-sm" alt="" loading="lazy" />
+                            }
+                            else
+                            {
+                                <div class="cover-sm cover-sm-ph">🎵</div>
+                            }
+                        </td>
+                        <td class="fw-semibold">@c.Titulo</td>
+                        <td>@c.Artista</td>
+                        <td>@c.Genero</td>
+                        <td>@(c.DuracionSeg.HasValue ? TimeSpan.FromSeconds(c.DuracionSeg.Value).ToString(@"m\:ss") : "-")</td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(c.SpotifyId))
+                            {
+                                <a href="https://open.spotify.com/track/@c.SpotifyId" target="_blank" rel="noopener"
+                                   class="btn btn-sm btn-outline-success">▶ Escuchar</a>
+                            }
+                        </td>
+                        <td>
+                            @using (Html.BeginForm("QuitarCancion", "Listas", FormMethod.Post,
+                                new { data_confirm = "¿Quitar \"" + c.Titulo + "\" de esta lista?", data_confirm_titulo = "Quitar de la lista", data_confirm_boton = "Sí, quitar" }))
+                            {
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="listaId" value="@Model.Lista.Id" />
+                                <input type="hidden" name="cancionId" value="@c.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Quitar</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<p class="mt-3">@Html.ActionLink("« Volver a mis listas", "Index", "Listas", null, new { @class = "btn btn-outline-secondary" })</p>

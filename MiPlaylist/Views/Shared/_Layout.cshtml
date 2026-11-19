@@ -1,40 +1,330 @@
 ﻿<!DOCTYPE html>
-<html>
+<html lang="es" data-bs-theme="light">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewBag.Title - Mi aplicación ASP.NET</title>
+    <title>@ViewBag.Title - MiPlaylist</title>
+
+    @* Aplica el tema guardado ANTES de pintar la página, para evitar el parpadeo *@
+    <script>
+        (function () {
+            try {
+                var tema = localStorage.getItem('tema');
+                if (!tema) {
+                    tema = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+                }
+                document.documentElement.setAttribute('data-bs-theme', tema);
+            } catch (e) { }
+        })();
+    </script>
+
     @Styles.Render("~/Content/css")
+    @RenderSection("estilos", required: false)
     @Scripts.Render("~/bundles/modernizr")
+    <style>
+        /* Tarjetas de canciones */
+        .song-card {
+            transition: transform .15s ease, box-shadow .15s ease;
+            overflow: hidden;
+        }
+
+            .song-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+            }
+
+        .song-cover {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            background: linear-gradient(135deg, #6f42c1, #0d6efd);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .song-cover img {
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+        .song-cover-ph {
+            font-size: 3rem;
+            color: rgba(255,255,255,.85);
+        }
+
+        .song-badge {
+            position: absolute;
+            top: .5rem;
+            left: .5rem;
+            z-index: 2;
+        }
+
+        /* Miniatura para tablas */
+        .cover-sm {
+            width: 48px;
+            height: 48px;
+            object-fit: cover;
+            border-radius: .4rem;
+            display: block;
+        }
+
+        .cover-sm-ph {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #6f42c1, #0d6efd);
+            color: #fff;
+        }
+        /* Barra de carga delgada */
+        #barraCarga {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            width: 100%;
+            z-index: 2000;
+            display: none;
+            background: linear-gradient(90deg, #6f42c1, #0d6efd, #20c997);
+            transform-origin: left;
+            animation: cargando 1.4s ease-in-out infinite;
+        }
+
+            #barraCarga.activa {
+                display: block;
+            }
+
+        @@keyframes cargando {
+            0% {
+                transform: scaleX(0);
+                opacity: 1;
+            }
+
+            70% {
+                transform: scaleX(.9);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scaleX(1);
+                opacity: 0;
+            }
+        }
+
+        /* Mosaico de portadas de una lista */
+        .mosaico {
+            aspect-ratio: 1 / 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: linear-gradient(135deg, #6f42c1, #0d6efd);
+            overflow: hidden;
+        }
+
+            .mosaico img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+            }
+
+            .mosaico .mosaico-uno {
+                grid-column: 1 / -1;
+                grid-row: 1 / -1;
+            }
+
+        .mosaico-ph {
+            grid-column: 1 / -1;
+            grid-row: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: rgba(255,255,255,.85);
+        }
+    </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark">
+    <div id="barraCarga" aria-hidden="true"></div>
+    @{
+        var ctrlActual = (ViewContext.RouteData.Values["controller"] ?? "").ToString();
+        Func<string, string> activo = c =>
+            string.Equals(ctrlActual, c, StringComparison.OrdinalIgnoreCase) ? " active" : "";
+    }
+
+    <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
         <div class="container">
-            @Html.ActionLink("Nombre de la aplicación", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
-            <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" title="Alternar navegación" aria-controls="navbarSupportedContent"
-                    aria-expanded="false" aria-label="Toggle navigation">
+            @Html.ActionLink("MiPlaylist", "Index", "Home", new { area = "" }, new { @class = "navbar-brand fw-bold" })
+
+            <button type="button" class="navbar-toggler" data-bs-toggle="collapse"
+                    data-bs-target="#menuPrincipal" aria-controls="menuPrincipal"
+                    aria-expanded="false" aria-label="Alternar navegación">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse d-sm-inline-flex justify-content-between">
-                <ul class="navbar-nav flex-grow-1">
-                    <li>@Html.ActionLink("Inicio", "Index", "Home", new { area = "" }, new { @class = "nav-link" })</li>
-                    <li>@Html.ActionLink("Acerca de", "About", "Home", new { area = "" }, new { @class = "nav-link" })</li>
-                    <li>@Html.ActionLink("Contacto", "Contact", "Home", new { area = "" }, new { @class = "nav-link" })</li>
+
+            <div class="collapse navbar-collapse" id="menuPrincipal">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    @if (Session["UsuarioId"] != null)
+                    {
+                        <li class="nav-item">@Html.ActionLink("Catálogo", "Index", "Catalogo", null, new { @class = "nav-link" + activo("Catalogo") })</li>
+                        <li class="nav-item">@Html.ActionLink("Mi biblioteca", "Index", "Biblioteca", null, new { @class = "nav-link" + activo("Biblioteca") })</li>
+                        <li class="nav-item">@Html.ActionLink("Mis listas", "Index", "Listas", null, new { @class = "nav-link" + activo("Listas") })</li>
+                    }
+                </ul>
+
+                <ul class="navbar-nav align-items-lg-center gap-lg-2">
+                    @if (Session["UsuarioId"] == null)
+                    {
+                        <li class="nav-item">@Html.ActionLink("Iniciar sesión", "Login", "Account", null, new { @class = "nav-link" })</li>
+                        <li class="nav-item">@Html.ActionLink("Registrarse", "Registro", "Account", null, new { @class = "nav-link" })</li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">@Html.ActionLink("Salir (" + Session["UsuarioNombre"] + ")", "Logout", "Account", null, new { @class = "nav-link" })</li>
+                    }
+                    <li class="nav-item">
+                        <button type="button" id="btnTema" class="btn btn-outline-secondary btn-sm"
+                                title="Cambiar entre modo claro y oscuro" aria-label="Cambiar tema">
+                            <span id="iconoTema">🌙</span>
+                        </button>
+                    </li>
                 </ul>
             </div>
         </div>
     </nav>
+
     <div class="container body-content">
         @RenderBody()
         <hr />
         <footer>
-            <p>&copy; @DateTime.Now.Year - Mi aplicación ASP.NET</p>
+            <p class="text-body-secondary small">&copy; @DateTime.Now.Year - MiPlaylist · Proyecto universitario</p>
         </footer>
     </div>
 
+    @* ===== Modal de confirmación reutilizable ===== *@
+    <div class="modal fade" id="modalConfirmar" tabindex="-1" aria-labelledby="modalConfirmarTitulo" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalConfirmarTitulo">Confirmar acción</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body" id="modalConfirmarTexto"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="modalConfirmarOk">Sí, continuar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ===== Toasts a partir de TempData ===== *@
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:1100">
+        @if (TempData["Mensaje"] != null)
+        {
+            <div class="toast align-items-center text-bg-success border-0" role="status" aria-live="polite" aria-atomic="true" data-bs-delay="4000">
+                <div class="d-flex">
+                    <div class="toast-body">✓ @TempData["Mensaje"]</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+                </div>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="toast align-items-center text-bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="6000">
+                <div class="d-flex">
+                    <div class="toast-body">⚠ @TempData["Error"]</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+                </div>
+            </div>
+        }
+    </div>
     @Scripts.Render("~/bundles/jquery")
     @Scripts.Render("~/bundles/bootstrap")
+
+    <script>
+        (function () {
+            var html = document.documentElement;
+            var boton = document.getElementById('btnTema');
+            var icono = document.getElementById('iconoTema');
+
+            function pintarIcono() {
+                // Si estamos en oscuro, el botón ofrece volver a claro (☀️), y viceversa
+                icono.textContent = html.getAttribute('data-bs-theme') === 'dark' ? '☀️' : '🌙';
+            }
+
+            boton.addEventListener('click', function () {
+                var nuevo = html.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+                html.setAttribute('data-bs-theme', nuevo);
+                try { localStorage.setItem('tema', nuevo); } catch (e) { }
+                pintarIcono();
+            });
+
+            pintarIcono();
+        })();
+    </script>
+
+    <script>
+        (function () {
+            var barra = document.getElementById('barraCarga');
+            function mostrarBarra() { barra.classList.add('activa'); }
+            function ocultarBarra() { barra.classList.remove('activa'); }
+
+            // Si vuelves con el botón "atrás", que la barra no se quede pegada
+            window.addEventListener('pageshow', ocultarBarra);
+
+            // Toasts: se muestran solos y se esconden solos
+            document.querySelectorAll('.toast').forEach(function (el) {
+                new bootstrap.Toast(el).show();
+            });
+
+            // Modal de confirmación: cualquier <form data-confirm="texto"> lo usa
+            var modalEl = document.getElementById('modalConfirmar');
+            var modal = new bootstrap.Modal(modalEl);
+            var formPendiente = null;
+
+            document.addEventListener('submit', function (e) {
+                var f = e.target;
+                var texto = f.getAttribute ? f.getAttribute('data-confirm') : null;
+                if (!texto) return;
+                e.preventDefault();
+                formPendiente = f;
+                document.getElementById('modalConfirmarTexto').textContent = texto;
+                document.getElementById('modalConfirmarTitulo').textContent =
+                    f.getAttribute('data-confirm-titulo') || 'Confirmar acción';
+                document.getElementById('modalConfirmarOk').textContent =
+                    f.getAttribute('data-confirm-boton') || 'Sí, continuar';
+                modal.show();
+            });
+
+            document.getElementById('modalConfirmarOk').addEventListener('click', function () {
+                if (!formPendiente) return;
+                var f = formPendiente;
+                formPendiente = null;
+                modal.hide();
+                mostrarBarra();
+                f.submit();   // submit() no vuelve a disparar el evento, así no hay bucle
+            });
+
+            // Barra de carga al enviar formularios válidos (después de la validación del cliente)
+            document.addEventListener('submit', function (e) {
+                if (!e.defaultPrevented) mostrarBarra();
+            });
+
+            // Barra de carga al cambiar de página con un enlace normal
+            document.addEventListener('click', function (e) {
+                var a = e.target.closest ? e.target.closest('a[href]') : null;
+                if (!a || e.defaultPrevented) return;
+                if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+                if (a.target === '_blank' || a.hasAttribute('data-bs-toggle')) return;
+                var href = a.getAttribute('href');
+                if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
+                if (a.hostname !== window.location.hostname) return;
+                mostrarBarra();
+            });
+        })();
+    </script>
     @RenderSection("scripts", required: false)
 </body>
 </html>

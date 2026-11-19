@@ -1,0 +1,118 @@
+﻿@model MiPlaylist.Models.CancionCrearViewModel
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-12">
+                        @Html.LabelFor(m => m.Titulo, new { @class = "form-label" })
+                        @Html.TextBoxFor(m => m.Titulo, new { @class = "form-control", maxlength = 150, placeholder = "Nombre de la canción" })
+                        @Html.ValidationMessageFor(m => m.Titulo, "", new { @class = "text-danger small" })
+                    </div>
+                    <div class="col-12">
+                        @Html.LabelFor(m => m.Artista, new { @class = "form-label" })
+                        @Html.TextBoxFor(m => m.Artista, new { @class = "form-control", maxlength = 150, placeholder = "Quién la canta" })
+                        @Html.ValidationMessageFor(m => m.Artista, "", new { @class = "text-danger small" })
+                    </div>
+                    <div class="col-md-4">
+                        @Html.LabelFor(m => m.Genero, new { @class = "form-label" })
+                        @Html.DropDownListFor(m => m.Genero, Model.Generos, "-- Elige --", new { @class = "form-select" })
+                        @Html.ValidationMessageFor(m => m.Genero, "", new { @class = "text-danger small" })
+                    </div>
+                    <div class="col-md-4">
+                        @Html.LabelFor(m => m.Anio, new { @class = "form-label" })
+                        @Html.TextBoxFor(m => m.Anio, new { @class = "form-control", placeholder = "Si no lo sabes, déjalo vacío" })
+                        @Html.ValidationMessageFor(m => m.Anio, "", new { @class = "text-danger small" })
+                    </div>
+                    <div class="col-md-4">
+                        @Html.LabelFor(m => m.Duracion, new { @class = "form-label" })
+                        @Html.TextBoxFor(m => m.Duracion, new { @class = "form-control", placeholder = "Ejemplo: 3:45" })
+                        @Html.ValidationMessageFor(m => m.Duracion, "", new { @class = "text-danger small" })
+                    </div>
+                    <div class="col-12">
+                        @Html.LabelFor(m => m.EnlaceSpotify, new { @class = "form-label" })
+                        <div class="input-group">
+                            <span class="input-group-text">▶</span>
+                            @Html.TextBoxFor(m => m.EnlaceSpotify, new { @class = "form-control", placeholder = "https://open.spotify.com/track/..." })
+                        </div>
+                        <div class="form-text">En Spotify: tres puntos (...) de la canción › Compartir › Copiar enlace de la canción.</div>
+                        @Html.ValidationMessageFor(m => m.EnlaceSpotify, "", new { @class = "text-danger small" })
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="sticky-lg-top" style="top:1rem">
+            <div class="small text-body-secondary mb-2">Así se verá en el catálogo</div>
+            <div class="card song-card" style="max-width:320px">
+                <div class="song-cover">
+                    <span class="song-cover-ph">🎵</span>
+                    <img id="pvImg" alt="" style="display:none" />
+                </div>
+                <div class="card-body pb-3">
+                    <h2 class="h6 card-title mb-1 text-truncate" id="pvTitulo">Título de la canción</h2>
+                    <div class="small text-body-secondary text-truncate" id="pvArtista">Artista</div>
+                    <div class="mt-2 d-flex flex-wrap gap-1">
+                        <span class="badge text-bg-secondary" id="pvGenero">Género</span>
+                        <span class="badge border text-body-secondary fw-normal" id="pvAnio" hidden></span>
+                        <span class="badge border text-body-secondary fw-normal" id="pvDur" hidden></span>
+                    </div>
+                </div>
+            </div>
+            <div class="small text-body-secondary mt-2" style="max-width:320px">
+                La portada aparece sola al pegar un enlace de Spotify válido.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        function $(id) { return document.getElementById(id); }
+        var ultimoId = '';
+
+        function pintar() {
+            $('pvTitulo').textContent = $('Titulo').value.trim() || 'Título de la canción';
+            $('pvArtista').textContent = $('Artista').value.trim() || 'Artista';
+
+            var sel = $('Genero');
+            $('pvGenero').textContent = (sel.value && sel.selectedIndex >= 0) ? sel.options[sel.selectedIndex].text : 'Género';
+
+            var anio = $('Anio').value.trim();
+            $('pvAnio').textContent = anio;
+            $('pvAnio').hidden = !anio;
+
+            var dur = $('Duracion').value.trim();
+            $('pvDur').textContent = dur;
+            $('pvDur').hidden = !dur;
+        }
+
+        function cargarPortada() {
+            var img = $('pvImg');
+            var texto = $('EnlaceSpotify').value.trim();
+            var m = texto.match(/track\/([A-Za-z0-9]{22})/) || texto.match(/^([A-Za-z0-9]{22})$/);
+            if (!m) { img.style.display = 'none'; ultimoId = ''; return; }
+            if (m[1] === ultimoId) return;
+            ultimoId = m[1];
+
+            // Si Spotify no permite la consulta desde el navegador, simplemente no se muestra la vista previa.
+            // Al guardar, el servidor busca la portada por su cuenta.
+            fetch('https://open.spotify.com/oembed?url=' + encodeURIComponent('https://open.spotify.com/track/' + m[1]))
+                .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+                .then(function (j) {
+                    if (j && j.thumbnail_url) { img.src = j.thumbnail_url; img.style.display = 'block'; }
+                })
+                .catch(function () { img.style.display = 'none'; });
+        }
+
+        ['Titulo', 'Artista', 'Anio', 'Duracion'].forEach(function (id) { $(id).addEventListener('input', pintar); });
+        $('Genero').addEventListener('change', pintar);
+        $('EnlaceSpotify').addEventListener('input', cargarPortada);
+
+        pintar();
+        cargarPortada();
+    })();
+</script>

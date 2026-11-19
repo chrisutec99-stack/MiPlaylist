@@ -1,0 +1,71 @@
+﻿@model List<MiPlaylist.Models.ListaResumen>
+@{
+    ViewBag.Title = "Mis listas";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div>
+        <h1 class="h2 mb-0">Mis listas de reproducción</h1>
+        <div class="text-body-secondary">@Model.Count listas</div>
+    </div>
+    @Html.ActionLink("+ Nueva lista", "Crear", "Listas", null, new { @class = "btn btn-primary" })
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Aún no tienes listas. Crea la primera, por ejemplo "Para estudiar".</div>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
+        @foreach (var l in Model)
+        {
+            <div class="col">
+                <div class="card song-card h-100">
+                    <a href="@Url.Action("Detalle", "Listas", new { id = l.Id })" class="text-decoration-none">
+                        <div class="mosaico">
+                            @if (l.Portadas.Count == 0)
+                            {
+                                <div class="mosaico-ph">🎵</div>
+                            }
+                            else if (l.Portadas.Count < 4)
+                            {
+                                <img class="mosaico-uno" src="@l.Portadas[0]" alt="" loading="lazy" />
+                            }
+                            else
+                            {
+                                foreach (var p in l.Portadas)
+                                {
+                                    <img src="@p" alt="" loading="lazy" />
+                                }
+                            }
+                        </div>
+                    </a>
+
+                    <div class="card-body">
+                        <h2 class="h5 card-title text-truncate mb-1" title="@l.Nombre">@l.Nombre</h2>
+                        @if (!string.IsNullOrWhiteSpace(l.Descripcion))
+                        {
+                            <p class="small text-body-secondary mb-2">@l.Descripcion</p>
+                        }
+                        <div class="d-flex flex-wrap gap-1">
+                            <span class="badge text-bg-secondary">@l.Total @(l.Total == 1 ? "canción" : "canciones")</span>
+                            <span class="badge border text-body-secondary fw-normal">@MiPlaylist.Helpers.Formato.DuracionTotal(l.DuracionTotalSeg)</span>
+                        </div>
+                    </div>
+
+                    <div class="card-footer bg-transparent border-0 pt-0 d-flex gap-2">
+                        @Html.ActionLink("Ver", "Detalle", "Listas", new { id = l.Id }, new { @class = "btn btn-sm btn-primary flex-fill" })
+                        @using (Html.BeginForm("Eliminar", "Listas", FormMethod.Post,
+                            new { @class = "flex-fill", data_confirm = "¿Eliminar la lista \"" + l.Nombre + "\" y su contenido? Las canciones seguirán en tu biblioteca.", data_confirm_titulo = "Eliminar lista", data_confirm_boton = "Sí, eliminar" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@l.Id" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger w-100">Eliminar</button>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

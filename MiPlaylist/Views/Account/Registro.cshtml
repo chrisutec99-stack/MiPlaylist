@@ -1,0 +1,120 @@
+﻿@model MiPlaylist.Models.RegistroViewModel
+@{
+    ViewBag.Title = "Crear cuenta";
+}
+@Html.Partial("_EstilosFormularios")
+
+<div class="auth-wrap">
+    <div class="card auth-card shadow">
+        <div class="auth-head">
+            <div class="auth-logo">🎧</div>
+            <h1 class="h4 mb-1">Crea tu cuenta</h1>
+            <div class="small opacity-75">Empieza a armar tu música en un minuto</div>
+        </div>
+        <div class="card-body p-4">
+            @using (Html.BeginForm("Registro", "Account", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                @Html.ValidationSummary(true, "", new { @class = "alert alert-danger py-2 small" })
+
+                <div class="mb-3">
+                    @Html.LabelFor(m => m.Nombre, new { @class = "form-label" })
+                    <div class="input-group">
+                        <span class="input-group-text">👤</span>
+                        @Html.TextBoxFor(m => m.Nombre, new { @class = "form-control", placeholder = "Tu nombre", maxlength = 80, autocomplete = "name", autofocus = "autofocus" })
+                    </div>
+                    @Html.ValidationMessageFor(m => m.Nombre, "", new { @class = "text-danger small" })
+                </div>
+
+                <div class="mb-3">
+                    @Html.LabelFor(m => m.Correo, new { @class = "form-label" })
+                    <div class="input-group">
+                        <span class="input-group-text">✉️</span>
+                        @Html.TextBoxFor(m => m.Correo, new { @class = "form-control", placeholder = "tucorreo@ejemplo.com", maxlength = 120, autocomplete = "email" })
+                    </div>
+                    @Html.ValidationMessageFor(m => m.Correo, "", new { @class = "text-danger small" })
+                </div>
+
+                <div class="mb-3">
+                    @Html.LabelFor(m => m.Clave, new { @class = "form-label" })
+                    <div class="input-group">
+                        <span class="input-group-text">🔒</span>
+                        @Html.PasswordFor(m => m.Clave, new { @class = "form-control", placeholder = "Crea una contraseña", autocomplete = "new-password" })
+                        <button class="btn btn-outline-secondary btn-ver" type="button" data-target="Clave" title="Mostrar u ocultar">👁</button>
+                    </div>
+                    @Html.ValidationMessageFor(m => m.Clave, "", new { @class = "text-danger small" })
+
+                    <div class="progress strength mt-2" role="progressbar" aria-label="Fortaleza de la contraseña">
+                        <div class="progress-bar" id="barraFuerza" style="width:0%"></div>
+                    </div>
+                    <div class="small text-body-secondary mt-1">Fortaleza: <span id="textoFuerza">—</span></div>
+                    <ul class="list-unstyled small mb-0 mt-1" id="reglas">
+                        <li data-r="len" class="text-body-secondary"><span class="m">○</span> Mínimo 8 caracteres</li>
+                        <li data-r="may" class="text-body-secondary"><span class="m">○</span> Una letra mayúscula</li>
+                        <li data-r="num" class="text-body-secondary"><span class="m">○</span> Un número</li>
+                    </ul>
+                </div>
+
+                <div class="mb-4">
+                    @Html.LabelFor(m => m.ConfirmarClave, new { @class = "form-label" })
+                    <div class="input-group">
+                        <span class="input-group-text">🔒</span>
+                        @Html.PasswordFor(m => m.ConfirmarClave, new { @class = "form-control", placeholder = "Repite la contraseña", autocomplete = "new-password" })
+                        <button class="btn btn-outline-secondary btn-ver" type="button" data-target="ConfirmarClave" title="Mostrar u ocultar">👁</button>
+                    </div>
+                    @Html.ValidationMessageFor(m => m.ConfirmarClave, "", new { @class = "text-danger small" })
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg w-100">Crear cuenta</button>
+            }
+        </div>
+        <div class="card-footer text-center bg-transparent py-3">
+            <span class="text-body-secondary">¿Ya tienes cuenta?</span>
+            @Html.ActionLink("Iniciar sesión", "Login", "Account", null, new { @class = "fw-semibold" })
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+    <script>
+        // Mostrar / ocultar contraseña
+        document.querySelectorAll('.btn-ver').forEach(function (b) {
+            b.addEventListener('click', function () {
+                var i = document.getElementById(b.getAttribute('data-target'));
+                i.type = (i.type === 'password') ? 'text' : 'password';
+            });
+        });
+
+        // Indicador de fortaleza (la validación real sigue siendo la del servidor)
+        var clave = document.getElementById('Clave');
+        var barra = document.getElementById('barraFuerza');
+        var texto = document.getElementById('textoFuerza');
+        var reglas = {
+            len: function (v) { return v.length >= 8; },
+            may: function (v) { return /[A-Z]/.test(v); },
+            num: function (v) { return /\d/.test(v); }
+        };
+        var nombres = ['—', 'Muy débil', 'Débil', 'Aceptable', 'Buena', 'Fuerte'];
+        var colores = ['bg-secondary', 'bg-danger', 'bg-danger', 'bg-warning', 'bg-info', 'bg-success'];
+
+        clave.addEventListener('input', function () {
+            var v = clave.value, puntos = 0;
+
+            document.querySelectorAll('#reglas li').forEach(function (li) {
+                var ok = reglas[li.getAttribute('data-r')](v);
+                li.classList.toggle('text-success', ok);
+                li.classList.toggle('text-body-secondary', !ok);
+                li.querySelector('.m').textContent = ok ? '✓' : '○';
+                if (ok) puntos++;
+            });
+            if (/[^A-Za-z0-9]/.test(v)) puntos++;
+            if (v.length >= 12) puntos++;
+            if (v.length === 0) puntos = 0;
+
+            barra.style.width = (puntos * 20) + '%';
+            barra.className = 'progress-bar ' + colores[puntos];
+            texto.textContent = nombres[puntos];
+        });
+    </script>
+}

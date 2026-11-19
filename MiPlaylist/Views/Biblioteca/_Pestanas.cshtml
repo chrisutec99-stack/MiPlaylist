@@ -1,0 +1,9 @@
+﻿@model string
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+        @Html.ActionLink("Mi biblioteca", "Index", "Biblioteca", null, new { @class = "nav-link" + (Model == "biblioteca" ? " active" : "") })
+    </li>
+    <li class="nav-item">
+        @Html.ActionLink("Canciones que creé", "Creadas", "Biblioteca", null, new { @class = "nav-link" + (Model == "creadas" ? " active" : "") })
+    </li>
+</ul>

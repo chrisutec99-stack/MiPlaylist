@@ -1,0 +1,40 @@
+﻿@model MiPlaylist.Models.OlvideClaveViewModel
+@{
+    ViewBag.Title = "Recuperar contraseña";
+}
+@Html.Partial("_EstilosFormularios")
+
+<div class="auth-wrap">
+    <div class="card auth-card shadow">
+        <div class="auth-head">
+            <div class="auth-logo">🔑</div>
+            <h1 class="h4 mb-1">¿Olvidaste tu contraseña?</h1>
+            <div class="small opacity-75">Te enviaremos un código a tu correo</div>
+        </div>
+        <div class="card-body p-4">
+            @using (Html.BeginForm("OlvideClave", "Account", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                @Html.ValidationSummary(true, "", new { @class = "alert alert-danger py-2 small" })
+
+                <div class="mb-4">
+                    @Html.LabelFor(m => m.Correo, new { @class = "form-label" })
+                    <div class="input-group">
+                        <span class="input-group-text">✉️</span>
+                        @Html.TextBoxFor(m => m.Correo, new { @class = "form-control", placeholder = "El correo con el que te registraste", autocomplete = "email", autofocus = "autofocus" })
+                    </div>
+                    @Html.ValidationMessageFor(m => m.Correo, "", new { @class = "text-danger small" })
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg w-100">Enviar código</button>
+            }
+        </div>
+        <div class="card-footer text-center bg-transparent py-3">
+            @Html.ActionLink("« Volver a iniciar sesión", "Login", "Account", null, new { @class = "fw-semibold" })
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

@@ -1,0 +1,73 @@
+﻿@model MiPlaylist.Models.CreadasViewModel
+@{
+    ViewBag.Title = "Canciones que creé";
+}
+
+<h1 class="h2">Mi biblioteca</h1>
+@Html.Partial("_Pestanas", "creadas")
+
+@if (!Model.Canciones.Any())
+{
+    <div class="alert alert-info">
+        Todavía no has creado ninguna canción.
+        @Html.ActionLink("Crear una nueva", "Crear", "Catalogo", null, new { @class = "alert-link" })
+    </div>
+}
+else
+{
+    <p class="text-body-secondary">@Model.Canciones.Count canciones creadas por ti.</p>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th style="width:64px"></th>
+                    <th>Título</th>
+                    <th>Artista</th>
+                    <th>Género</th>
+                    <th>Duración</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model.Canciones)
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrEmpty(c.PortadaUrl))
+                            {
+                                <img src="@c.PortadaUrl" class="cover-sm" alt="" loading="lazy" />
+                            }
+                            else
+                            {
+                                <div class="cover-sm cover-sm-ph">🎵</div>
+                            }
+                        </td>
+                        <td class="fw-semibold">@c.Titulo</td>
+                        <td>@c.Artista</td>
+                        <td>@c.Genero</td>
+                        <td>@(c.DuracionSeg.HasValue ? TimeSpan.FromSeconds(c.DuracionSeg.Value).ToString(@"m\:ss") : "-")</td>
+                        <td>
+                            @if (Model.EnBiblioteca.Contains(c.Id))
+                            {
+                                <span class="badge text-bg-success">En mi biblioteca</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-secondary">Solo en el catálogo</span>
+                            }
+                        </td>
+                        <td class="text-end text-nowrap">
+                            @if (!string.IsNullOrEmpty(c.SpotifyId))
+                            {
+                                <a href="https://open.spotify.com/track/@c.SpotifyId" target="_blank" rel="noopener"
+                                   class="btn btn-sm btn-outline-success">▶ Escuchar</a>
+                            }
+                            @Html.ActionLink("✎ Editar", "Editar", "Catalogo", new { id = c.Id }, new { @class = "btn btn-sm btn-outline-secondary" })
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

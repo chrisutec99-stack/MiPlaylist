@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Optimization;
@@ -16,6 +13,13 @@ namespace MiPlaylist
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
             BundleConfig.RegisterBundles(BundleTable.Bundles);
+        }
+
+        // Cuando el servidor crea una sesión nueva (por ejemplo tras reiniciar),
+        // se reconstruye desde la cookie cifrada de "recordarme"
+        protected void Session_Start()
+        {
+            MiPlaylist.Helpers.SesionPersistente.Restaurar(HttpContext.Current);
         }
     }
 }

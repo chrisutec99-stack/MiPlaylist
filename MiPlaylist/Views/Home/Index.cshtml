@@ -1,33 +1,151 @@
-﻿@{
-    ViewBag.Title = "Home Page";
+﻿@model MiPlaylist.ViewModels.HomeResumenViewModel
+@{
+    ViewBag.Title = "Inicio";
+    bool haySesion = Model != null;
 }
 
-<main>
-    <section class="row" aria-labelledby="aspnetTitle">
-        <h1 id="title">ASP.NET</h1>
-        <p class="lead">ASP.NET is a free web framework for building great Web sites and Web applications using HTML, CSS and JavaScript.</p>
-        <p><a href="https://asp.net" class="btn btn-primary btn-md">Learn more &raquo;</a></p>
+<section class="hero p-4 p-md-5 my-4">
+    <div class="row align-items-center position-relative" style="z-index:1;">
+        <div class="col-lg-7">
+            @if (haySesion)
+            {
+                <p class="text-uppercase fw-semibold mb-2 opacity-75">Bienvenido de vuelta</p>
+                <h1 class="display-4 fw-bold mb-3">Hola, @Model.Nombre 👋</h1>
+                <p class="lead mb-4">Tu música está donde la dejaste. ¿Armamos una lista nueva o seguimos explorando el catálogo?</p>
+                <div class="d-flex flex-wrap gap-2">
+                    @Html.ActionLink("Explorar catálogo", "Index", "Catalogo", null, new { @class = "btn btn-light btn-lg fw-semibold" })
+                    @Html.ActionLink("Mis listas", "Index", "Listas", null, new { @class = "btn btn-outline-light btn-lg" })
+                </div>
+            }
+            else
+            {
+                <p class="text-uppercase fw-semibold mb-2 opacity-75">Tu música, ordenada</p>
+                <h1 class="display-3 fw-bold mb-3">MiPlaylist</h1>
+                <p class="lead mb-4">Explora un catálogo de más de 500 canciones, arma tu biblioteca y crea listas de reproducción a tu manera.</p>
+                <div class="d-flex flex-wrap gap-2">
+                    @Html.ActionLink("Registrarse gratis", "Registro", "Account", null, new { @class = "btn btn-light btn-lg fw-semibold" })
+                    @Html.ActionLink("Entrar", "Login", "Account", null, new { @class = "btn btn-outline-light btn-lg" })
+                </div>
+            }
+        </div>
+        <div class="col-lg-5 d-none d-lg-flex justify-content-center">
+            <div class="equalizer" aria-hidden="true">
+                <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+        </div>
+    </div>
+</section>
+
+@if (haySesion)
+{
+    <section class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="card stat-card h-100 text-center">
+                <div class="card-body">
+                    <div class="stat-num">@Model.TotalCatalogo</div>
+                    <div class="text-body-secondary">Canciones en el catálogo</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card stat-card h-100 text-center">
+                <div class="card-body">
+                    <div class="stat-num">@Model.TotalBiblioteca</div>
+                    <div class="text-body-secondary">En mi biblioteca</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card stat-card h-100 text-center">
+                <div class="card-body">
+                    <div class="stat-num">@Model.TotalFavoritas</div>
+                    <div class="text-body-secondary">Favoritas ⭐</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card stat-card h-100 text-center">
+                <div class="card-body">
+                    <div class="stat-num">@Model.TotalListas</div>
+                    <div class="text-body-secondary">Listas de reproducción</div>
+                </div>
+            </div>
+        </div>
     </section>
 
-    <div class="row">
-        <section class="col-md-4" aria-labelledby="gettingStartedTitle">
-            <h2 id="gettingStartedTitle">Getting started</h2>
-            <p>
-                ASP.NET MVC gives you a powerful, patterns-based way to build dynamic websites that
-                enables a clean separation of concerns and gives you full control over markup
-                for enjoyable, agile development.
-            </p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301865">Learn more &raquo;</a></p>
-        </section>
-        <section class="col-md-4" aria-labelledby="librariesTitle">
-            <h2 id="librariesTitle">Get more libraries</h2>
-            <p>NuGet is a free Visual Studio extension that makes it easy to add, remove, and update libraries and tools in Visual Studio projects.</p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301866">Learn more &raquo;</a></p>
-        </section>
-        <section class="col-md-4" aria-labelledby="hostingTitle">
-            <h2 id="hostingTitle">Web Hosting</h2>
-            <p>You can easily find a web hosting company that offers the right mix of features and price for your applications.</p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301867">Learn more &raquo;</a></p>
-        </section>
-    </div>
-</main>
+    <section class="mb-4">
+        <h2 class="h4 mb-3">Agregadas recientemente</h2>
+        @if (Model.Recientes.Any())
+        {
+            <div class="list-group">
+                @foreach (var c in Model.Recientes)
+                {
+                    <div class="list-group-item d-flex align-items-center gap-3">
+                        <span class="fs-4">🎵</span>
+                        <div>
+                            <div class="fw-semibold">@c.Titulo</div>
+                            <div class="small text-body-secondary">@c.Artista</div>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="mt-3">
+                @Html.ActionLink("Ver toda mi biblioteca →", "Index", "Biblioteca", null, new { @class = "link-primary" })
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-secondary mb-0">
+                Todavía no tienes canciones en tu biblioteca.
+                @Html.ActionLink("Ve al catálogo", "Index", "Catalogo") y agrega tus primeras canciones.
+            </div>
+        }
+    </section>
+}
+else
+{
+    <section class="mb-5">
+        <h2 class="h3 text-center mb-4">Todo lo que puedes hacer</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card feature-card h-100">
+                    <div class="card-body">
+                        <div class="feature-icon">🔎</div>
+                        <h3 class="h5">Explora el catálogo</h3>
+                        <p class="text-body-secondary mb-0">Busca por título, artista o álbum y filtra por género. ¿Falta una canción? Agrégala tú mismo.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card feature-card h-100">
+                    <div class="card-body">
+                        <div class="feature-icon">📚</div>
+                        <h3 class="h5">Tu biblioteca</h3>
+                        <p class="text-body-secondary mb-0">Guarda lo que te gusta, marca tus favoritas y mantén tu colección ordenada.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card feature-card h-100">
+                    <div class="card-body">
+                        <div class="feature-icon">🎧</div>
+                        <h3 class="h5">Listas a tu medida</h3>
+                        <p class="text-body-secondary mb-0">Crea listas para cada momento y consulta la duración total de cada una.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="text-center mb-5">
+        <h2 class="h3 mb-4">Empieza en 3 pasos</h2>
+        <div class="row g-3 justify-content-center">
+            <div class="col-md-3"><span class="paso">1</span><p class="mt-2 mb-0">Crea tu cuenta</p></div>
+            <div class="col-md-3"><span class="paso">2</span><p class="mt-2 mb-0">Agrega canciones a tu biblioteca</p></div>
+            <div class="col-md-3"><span class="paso">3</span><p class="mt-2 mb-0">Arma tus listas</p></div>
+        </div>
+    </section>
+}
+@section estilos {
+    <link href="~/Content/home.css" rel="stylesheet" />
+}
